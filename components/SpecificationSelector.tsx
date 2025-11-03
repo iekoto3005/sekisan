@@ -147,6 +147,30 @@ export const SpecificationSelector: React.FC<SpecificationSelectorProps> = ({
                         />
                     </div>
                   )}
+                  {category.id === 'kitchen' && (
+                    <div className="pl-6 pt-1">
+                      <OptionCheckbox
+                        option={{ name: 'カップボード', costText: hasCupboard ? '選択中' : '未選択' }}
+                        isChecked={hasCupboard}
+                        onChange={handleHasCupboardChange}
+                        disabled={disabled}
+                      />
+                      {hasCupboard && (
+                        <div className="pl-8 pt-2 space-y-2 border-l-2 border-base-300 ml-4 mt-2">
+                          {cupboardOptions.map(cbOption => (
+                             <SpecRadioOption
+                                key={cbOption.id}
+                                spec={{ id: 'cupboard_group' }}
+                                option={{ ...cbOption, name: cbOption.name.replace('カップボード ', ''), adjustmentText: cbOption.costText }}
+                                selectedValue={cupboard}
+                                onChange={onCupboardChange}
+                                disabled={disabled}
+                              />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -279,30 +303,6 @@ export const SpecificationSelector: React.FC<SpecificationSelectorProps> = ({
                       </div>
                     )}
                   </div>
-                  {/* Custom Cupboard Group */}
-                  <div>
-                    <OptionCheckbox
-                      option={{ name: 'カップボード', costText: hasCupboard ? '選択中' : '未選択' }}
-                      isChecked={hasCupboard}
-                      onChange={handleHasCupboardChange}
-                      disabled={disabled}
-                    />
-                    {hasCupboard && (
-                      <div className="pl-8 pt-2 space-y-2 border-l-2 border-base-300 ml-4 mt-2">
-                        {cupboardOptions.map(cbOption => (
-                           <SpecRadioOption
-                              key={cbOption.id}
-                              spec={{ id: 'cupboard_group' }}
-                              option={{ ...cbOption, name: cbOption.name.replace('カップボード ', ''), adjustmentText: cbOption.costText }}
-                              selectedValue={cupboard}
-                              onChange={onCupboardChange}
-                              disabled={disabled}
-                            />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
                 </div>
               </div>
             )

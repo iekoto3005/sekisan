@@ -4,11 +4,17 @@ import { PlanData } from '../types';
 // Tell TypeScript that pdfjsLib is a global variable loaded from the script tag.
 declare const pdfjsLib: any;
 
-// Configure the worker. This needs to be done once.
-// It assumes pdfjsLib is loaded and available on the window object.
-if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
-}
+// This function ensures the PDF.js worker is configured.
+// It is called lazily, just before it's needed, to avoid race conditions
+// with the script that loads pdf.js.
+const setupPdfJsWorker = () => {
+    // Check if the library is loaded and the worker is not already configured.
+    // It's safe to re-set the workerSrc property.
+    if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
+    }
+};
+
 
 /**
  * Converts the first page of a PDF file to a base64 encoded JPEG image.
@@ -16,6 +22,8 @@ if (typeof pdfjsLib !== 'undefined') {
  * @returns A promise that resolves to an object containing the base64 data and mime type.
  */
 const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => void): Promise<{ base64Data: string; mimeType: string; }> => {
+  setupPdfJsWorker(); // Attempt to configure the worker.
+  
   if (typeof pdfjsLib === 'undefined') {
     throw new Error('PDF.jsライブラリが読み込まれていません。');
   }
@@ -38,7 +46,6 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
   }
 
   await page.render({ canvasContext: context, viewport: viewport }).promise;
-  onProgress(20);
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92); // Use JPEG with high quality, slightly reduced to manage size
 
@@ -49,6 +56,8 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
 };
 
 export const generatePdfPreviewUrl = async (file: File): Promise<string> => {
+    setupPdfJsWorker(); // Attempt to configure the worker.
+
     if (typeof pdfjsLib === 'undefined') {
       throw new Error('PDF.jsライブラリが読み込まれていません。');
     }
@@ -102,10 +111,12 @@ export const analyzeImage = async (planFile: File, onProgress: (p: number) => vo
     required: ["物件名", "階数", "建築面積", "延床面積", "外壁面積", "キッチン数", "洗面台数", "トイレ数"]
   };
 
+  let progressInterval: ReturnType<typeof setInterval> | undefined;
+
   try {
-    // PDF conversion will take up the progress from 5% to 25%
+    // PDF conversion will take up the progress from 5% to 20%
     const { base64Data, mimeType } = await convertPdfToImageBase64(planFile, onProgress);
-    onProgress(25);
+    onProgress(20);
 
     const imagePart = {
       inlineData: {
@@ -129,7 +140,16 @@ export const analyzeImage = async (planFile: File, onProgress: (p: number) => vo
 - 3階建て以上の場合のみ、「階高」の項目を追加し、図面から読み取れる情報を記載してください。`,
     };
     
-    onProgress(30);
+    // Simulate progress during the API call, which is the longest part
+    let progress = 20;
+    progressInterval = setInterval(() => {
+        if (progress < 98) {
+            progress += 1;
+            onProgress(progress);
+        } else {
+            if (progressInterval) clearInterval(progressInterval);
+        }
+    }, 400); // Increment every 400ms (even slower to better match API time)
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -141,15 +161,19 @@ export const analyzeImage = async (planFile: File, onProgress: (p: number) => vo
         },
     });
     
-    onProgress(95);
+    if (progressInterval) clearInterval(progressInterval);
+    onProgress(99);
 
     const jsonString = response.text.trim();
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```$/g, '');
+    const cleanedJsonString = jsonString.replace(/^` + "```" + `json\s*|` + "```" + `$/g, '');
     const parsedResult = JSON.parse(cleanedJsonString);
     onProgress(100);
     return parsedResult as PlanData;
 
   } catch (error) {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+    }
     console.error("Error in PDF processing or Gemini API call:", error);
     if (error instanceof Error) {
         if (error.name === 'SyntaxError') {

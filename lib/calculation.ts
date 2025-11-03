@@ -31,7 +31,9 @@ const getSpecAdjustment = (
     selectedOptionId: string,
     buildingArea: number,
     totalFloorArea: number,
-    exteriorWallArea: number
+    exteriorWallArea: number,
+    westernArea: number,
+    wetArea: number
 ): number => {
     const selectedOption = category.options.find((o: any) => o.id === selectedOptionId);
     if (!selectedOption?.adjustment) {
@@ -47,6 +49,8 @@ const getSpecAdjustment = (
         if (adj.area_type === '建築面積') area = buildingArea;
         else if (adj.area_type === '延床面積') area = totalFloorArea;
         else if (adj.area_type === '外壁面積') area = exteriorWallArea;
+        else if (adj.area_type === '洋室床面積') area = westernArea;
+        else if (adj.area_type === '水廻り床面積') area = wetArea;
         return adj.value * area;
     }
     return 0;
@@ -69,6 +73,9 @@ export function calculateEstimate(
   const exteriorWallArea = parseValue(analysis.外壁面積);
   const toiletCount = parseValue(analysis.トイレ数) || 1;
   const washStandCount = parseValue(analysis.洗面台数) || 1;
+
+  const wetArea = toiletCount * 2 + 6;
+  const westernArea = totalFloorArea > wetArea ? totalFloorArea - wetArea : 0;
 
   const formulaContext = {
     buildingArea,
@@ -112,13 +119,33 @@ export function calculateEstimate(
     baseCosts[item.name] = { cost, specName, quantity, unit: item.unit, profitMargin: item.profitMargin };
   });
 
+  if (baseCosts['内装・塗装・畳工事']) {
+    const wallCeilingSpecId = specs['wall_ceiling'];
+    const wallCeilingSpecName = getSpec('wall_ceiling', wallCeilingSpecId)?.name ?? '';
+
+    const floorWesternSpecId = specs['floor_material_western'];
+    const floorWesternSpecName = getSpec('floor_material_western', floorWesternSpecId)?.name ?? '';
+
+    const floorWetSpecId = specs['floor_material_wet'];
+    const floorWetSpecName = getSpec('floor_material_wet', floorWetSpecId)?.name ?? '';
+    
+    const floorSpec = `洋室 ${floorWesternSpecName} / 水廻り ${floorWetSpecName}`;
+    
+    const specParts = [];
+    if (wallCeilingSpecName) specParts.push(wallCeilingSpecName);
+    specParts.push(floorSpec);
+    
+    baseCosts['内装・塗装・畳工事'].specName = specParts.join(' / ');
+  }
+
   const originalMapping: { [key: string]: string[] } = {
       'entrance_porch': ['左官・タイル工事'],
       'roof': ['屋根工事'],
       'exterior_wall': ['外壁'],
       'sash': ['外部建具'],
       'entrance_door': ['外部建具'],
-      'floor_material': ['内装・塗装・畳工事'],
+      'floor_material_western': ['内装・塗装・畳工事'],
+      'floor_material_wet': ['内装・塗装・畳工事'],
       'wall_ceiling': ['内装・塗装・畳工事'],
       'interior_door': ['内部建具'],
       'ventilation': ['電気工事'],
@@ -137,7 +164,9 @@ export function calculateEstimate(
             selectedOptionId,
             buildingArea,
             totalFloorArea,
-            exteriorWallArea
+            exteriorWallArea,
+            westernArea,
+            wetArea
         );
         targetItemNames.forEach(targetItemName => {
             if (baseCosts[targetItemName]) {

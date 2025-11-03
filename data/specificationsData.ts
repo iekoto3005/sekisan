@@ -2,7 +2,7 @@
 
 export interface Adjustment {
   type: 'fixed' | 'per_area';
-  area_type?: '建築面積' | '延床面積' | '外壁面積';
+  area_type?: '建築面積' | '延床面積' | '外壁面積' | '洋室床面積' | '水廻り床面積';
   value: number;
 }
 
@@ -14,7 +14,7 @@ export interface SpecOption {
 }
 
 export interface SpecCategory {
-  id: string;
+  id:string;
   name: string;
   options: SpecOption[];
 }
@@ -89,12 +89,20 @@ export const DEFAULT_SPEC_CATEGORIES: SpecCategory[] = [
     ],
   },
   {
-    id: 'floor_material',
-    name: '床材',
+    id: 'floor_material_western',
+    name: '床材① 洋室',
     options: [
-      { id: 'tri_layer_flooring', name: '三層フローリングW190', adjustmentText: '標準', adjustment: { type: 'fixed', value: 0 } },
-      { id: 'moltestone', name: 'モルテストーン', adjustmentText: '+12,000円/㎡', adjustment: { type: 'per_area', area_type: '延床面積', value: 12000 } }, // Assumed
-      { id: 'tile_600_floor', name: '600角タイル', adjustmentText: '+15,000円/㎡', adjustment: { type: 'per_area', area_type: '延床面積', value: 15000 } },
+      { id: 'tri_layer_flooring', name: '三層フローリング', adjustmentText: '標準', adjustment: { type: 'per_area', area_type: '洋室床面積', value: 0 } },
+      { id: 'pvc_tile', name: '塩ビタイル', adjustmentText: '±0円/㎡', adjustment: { type: 'per_area', area_type: '洋室床面積', value: 0 } },
+      { id: 'tile_600_floor_western', name: 'タイル600角', adjustmentText: '+15,000円/㎡', adjustment: { type: 'per_area', area_type: '洋室床面積', value: 15000 } },
+    ],
+  },
+  {
+    id: 'floor_material_wet',
+    name: '床材② 水廻り',
+    options: [
+      { id: 'pvc_tile_wet', name: '塩ビタイル', adjustmentText: '標準', adjustment: { type: 'per_area', area_type: '水廻り床面積', value: 0 } },
+      { id: 'tile_600_floor_wet', name: 'タイル600角', adjustmentText: '+15,000円/㎡', adjustment: { type: 'per_area', area_type: '水廻り床面積', value: 15000 } },
     ],
   },
   {

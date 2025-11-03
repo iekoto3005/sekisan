@@ -16,7 +16,7 @@ export const DEFAULT_COST_ITEMS: CostItem[] = [
   { id: 'plastering_tile_work', name: '左官・タイル工事', formula: 'totalFloorArea * 1200 + 122000', unit: '式', specCategory: 'entrance_porch', profitMargin: 0.35 },
   { id: 'building_materials_work', name: '建材工事', formula: 'totalFloorArea * 6500 + 1000000', unit: '式', profitMargin: 0.35 },
   { id: 'exterior_joinery', name: '外部建具', formula: 'totalFloorArea * 10000 + 70000', unit: '式', specCategory: 'sash', profitMargin: 0.35 },
-  { id: 'interior_finishing_work', name: '内装・塗装・畳工事', formula: 'totalFloorArea * 6000 + 50000', unit: '式', specCategory: 'wall_ceiling', profitMargin: 0.35 },
+  { id: 'interior_finishing_work', name: '内装・塗装・畳工事', formula: 'totalFloorArea * 6000 + 50000', unit: '式', profitMargin: 0.35 },
   { id: 'interior_joinery', name: '内部建具', formula: 'totalFloorArea * 6500 + 70000', unit: '式', specCategory: 'interior_door', profitMargin: 0.35 },
   { id: 'kitchen_equipment', name: '住宅設備 キッチン', formula: '900000', unit: '式', specCategory: 'kitchen', profitMargin: 0.35 },
   { id: 'wash_stand_equipment', name: '住宅設備 洗面台', formula: '300000 * washStandCount', unit: '台', specCategory: 'wash_stand', profitMargin: 0.35 },

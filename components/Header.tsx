@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 
 interface AppMenuProps {
@@ -150,8 +149,8 @@ export const Header: React.FC<HeaderProps> = ({
             />
         </div>
         <div className="flex-shrink-0 text-center">
-            <h1 className="text-6xl md:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-secondary tracking-widest">
-            SumrAI
+            <h1 className="text-6xl md:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-secondary tracking-wide">
+            SMART積算
             </h1>
             <p className="text-content-200 mt-1">まずはプランをアップロード。自動積算を開始します。</p>
         </div>

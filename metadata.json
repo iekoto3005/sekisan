@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Image Analyzer",
+  "description": "An application that allows users to upload a photo and use the Gemini AI model to analyze and understand its content.",
+  "requestFramePermissions": []
+}

@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -9,7 +8,7 @@ const fileToBase64 = (file: File): Promise<string> => {
       if (typeof reader.result === 'string') {
         resolve(reader.result.split(',')[1]);
       } else {
-        reject(new Error('Failed to read file as base64 string.'));
+        reject(new Error('ファイルのBase64文字列への読み込みに失敗しました。'));
       }
     };
     reader.onerror = (error) => reject(error);
@@ -18,7 +17,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 export const analyzeImage = async (imageFile: File, prompt: string): Promise<string> => {
   if (!process.env.API_KEY) {
-    throw new Error("The API_KEY environment variable is not set. Please ensure it is configured.");
+    throw new Error("API_KEY 環境変数が設定されていません。設定を確認してください。");
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -46,8 +45,8 @@ export const analyzeImage = async (imageFile: File, prompt: string): Promise<str
   } catch (error) {
     console.error("Error in Gemini API call:", error);
     if (error instanceof Error) {
-        throw new Error(`Gemini API Error: ${error.message}`);
+        throw new Error(`Gemini APIエラー: ${error.message}`);
     }
-    throw new Error("An unknown error occurred while calling the Gemini API.");
+    throw new Error("Gemini APIの呼び出し中に不明なエラーが発生しました。");
   }
 };

@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 
 interface ImageUploaderProps {
@@ -48,7 +47,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageChange, pre
             <button
                 onClick={(e) => { e.stopPropagation(); onRemoveImage();}}
                 className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75 transition-colors"
-                aria-label="Remove image"
+                aria-label="画像を削除"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -58,7 +57,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageChange, pre
         ) : (
           <div className="text-center">
             <ImageIcon />
-            <p className="mt-2 text-content-200">Click to upload an image</p>
+            <p className="mt-2 text-content-200">クリックして画像をアップロード</p>
             <p className="text-xs text-content-200">(PNG, JPG, WEBP)</p>
           </div>
         )}

@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { analyzeImage } from './services/geminiService';
 import { Header } from './components/Header';
@@ -16,7 +15,7 @@ const WandIcon = () => (
 export default function App() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState<string>('Describe this image in detail. What is happening? What are the key objects?');
+  const [prompt, setPrompt] = useState<string>('この画像を詳細に説明してください。何が起きていますか？主なオブジェクトは何ですか？');
   const [analysis, setAnalysis] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -42,7 +41,7 @@ export default function App() {
 
   const handleAnalyze = useCallback(async () => {
     if (!imageFile || !prompt.trim()) {
-      setError('Please select an image and enter a prompt.');
+      setError('画像をアップロードして、プロンプトを入力してください。');
       return;
     }
     setIsLoading(true);
@@ -53,8 +52,8 @@ export default function App() {
       const result = await analyzeImage(imageFile, prompt);
       setAnalysis(result);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(`Analysis failed: ${errorMessage}`);
+      const errorMessage = e instanceof Error ? e.message : '不明なエラーが発生しました。';
+      setError(`分析に失敗しました: ${errorMessage}`);
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -68,18 +67,18 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           
           <div className="flex flex-col space-y-6">
-            <h2 className="text-2xl font-bold text-content-100">1. Upload Image</h2>
+            <h2 className="text-2xl font-bold text-content-100">1. 画像をアップロード</h2>
             <ImageUploader 
               onImageChange={handleImageSelect} 
               previewUrl={imageDataUrl}
               onRemoveImage={handleRemoveImage}
             />
 
-            <h2 className="text-2xl font-bold text-content-100 mt-4">2. Provide a Prompt</h2>
+            <h2 className="text-2xl font-bold text-content-100 mt-4">2. プロンプトを入力</h2>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g., Describe this image..."
+              placeholder="例：この画像を説明してください..."
               className="w-full h-32 p-3 bg-base-200 border border-base-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition duration-200 resize-none"
               disabled={!imageFile}
             />
@@ -90,12 +89,12 @@ export default function App() {
               className="w-full flex items-center justify-center bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200"
             >
               <WandIcon />
-              {isLoading ? 'Analyzing...' : 'Analyze Image'}
+              {isLoading ? '分析中...' : '画像を分析'}
             </button>
           </div>
 
           <div className="flex flex-col space-y-6">
-            <h2 className="text-2xl font-bold text-content-100">3. Get Analysis</h2>
+            <h2 className="text-2xl font-bold text-content-100">3. 分析結果</h2>
             <AnalysisResult result={analysis} isLoading={isLoading} error={error} />
           </div>
         </div>

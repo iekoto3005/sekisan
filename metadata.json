@@ -1,5 +1,5 @@
 {
-  "name": "Gemini Image Analyzer",
-  "description": "An application that allows users to upload a photo and use the Gemini AI model to analyze and understand its content.",
+  "name": "Gemini画像アナライザー",
+  "description": "ユーザーが写真をアップロードし、Gemini AIモデルを使用してその内容を分析および理解できるアプリケーションです。",
   "requestFramePermissions": []
 }

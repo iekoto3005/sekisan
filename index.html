@@ -19,6 +19,15 @@
               'content-100': '#1f2937',
               'content-200': '#6b7280',
             },
+            keyframes: {
+              highlight: {
+                '0%, 100%': { backgroundColor: 'transparent' },
+                '50%': { backgroundColor: '#ede9fe' }, // violet-100
+              },
+            },
+            animation: {
+              highlight: 'highlight 2s ease-in-out',
+            },
           },
         },
       }

@@ -33,9 +33,9 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  onProgress(20);
+  onProgress(10);
   const page = await pdf.getPage(1); // Get the first page
-  onProgress(30);
+  onProgress(15);
 
   const viewport = page.getViewport({ scale: 2.0 }); // Increase scale for better resolution
 
@@ -49,7 +49,7 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
   }
 
   await page.render({ canvasContext: context, viewport: viewport }).promise;
-  onProgress(50);
+  onProgress(20);
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG with high quality
 
@@ -89,9 +89,9 @@ export const analyzeImage = async (planFile: File, onProgress: (p: number) => vo
   };
 
   try {
-    // PDF conversion will take up the progress from 5% to 60%
+    // PDF conversion will take up the progress from 5% to 25%
     const { base64Data, mimeType } = await convertPdfToImageBase64(planFile, onProgress);
-    onProgress(60);
+    onProgress(25);
 
     const imagePart = {
       inlineData: {
@@ -115,11 +115,11 @@ export const analyzeImage = async (planFile: File, onProgress: (p: number) => vo
 - 3階建て以上の場合のみ、「階高」の項目を追加し、図面から読み取れる情報を記載してください。`,
     };
     
-    onProgress(65);
+    onProgress(30);
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: { parts: [imagePart, textPart] },
+        contents: [{ parts: [imagePart, textPart] }],
         config: {
           responseMimeType: "application/json",
           responseSchema: schema,

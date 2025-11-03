@@ -19,7 +19,7 @@ export const DEFAULT_COST_ITEMS: CostItem[] = [
   { id: 'interior_finishing_work', name: '内装・塗装・畳工事', formula: 'totalFloorArea * 6000 + 50000', unit: '式', specCategory: 'wall_ceiling', profitMargin: 0.35 },
   { id: 'interior_joinery', name: '内部建具', formula: 'totalFloorArea * 6500 + 70000', unit: '式', specCategory: 'interior_door', profitMargin: 0.35 },
   { id: 'kitchen_equipment', name: '住宅設備 キッチン', formula: '900000', unit: '式', specCategory: 'kitchen', profitMargin: 0.35 },
-  { id: 'wash_stand_equipment', name: '住宅設備 洗面台', formula: '300000', unit: '式', specCategory: 'wash_stand', profitMargin: 0.35 },
+  { id: 'wash_stand_equipment', name: '住宅設備 洗面台', formula: '300000 * washStandCount', unit: '台', specCategory: 'wash_stand', profitMargin: 0.35 },
   { id: 'toilet_equipment', name: '住宅設備 トイレ', formula: '100000 * toiletCount', unit: '台', specCategory: 'toilet', profitMargin: 0.35 },
   { id: 'unit_bath_equipment', name: '住宅設備 ユニットバス', formula: '350000', unit: '式', profitMargin: 0.35 },
   { id: 'electrical_work', name: '電気工事', formula: 'totalFloorArea * 3000 + 500000', unit: '式', specCategory: 'ventilation', profitMargin: 0.35 },

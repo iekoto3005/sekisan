@@ -7,6 +7,7 @@ interface ImageUploaderProps {
   onRemoveFile: () => void;
   disabled?: boolean;
   progress?: number | null;
+  previewImageUrl?: string | null;
 }
 
 const PdfIcon = () => (
@@ -22,7 +23,7 @@ const FileSelectedIcon = () => (
 );
 
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, fileName, onRemoveFile, disabled = false, progress = null }) => {
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, fileName, onRemoveFile, disabled = false, progress = null, previewImageUrl = null }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,17 +55,25 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, file
       />
       <div
         onClick={handleContainerClick}
-        className={`relative w-full aspect-video bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex items-center justify-center transition-colors duration-200 ${!fileName && !disabled ? 'hover:border-brand-primary cursor-pointer' : ''} ${disabled && !progress ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`relative w-full aspect-video bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex items-center justify-center transition-colors duration-200 overflow-hidden ${!fileName && !disabled ? 'hover:border-brand-primary cursor-pointer' : ''} ${disabled && !progress ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {fileName ? (
           <>
-            <div className="text-center p-4 flex flex-col items-center">
-              <FileSelectedIcon />
-              <p className="mt-2 text-content-100 font-medium break-all" title={fileName}>{fileName}</p>
-            </div>
+            {previewImageUrl ? (
+                <img 
+                    src={previewImageUrl} 
+                    alt={fileName} 
+                    className="w-full h-full object-contain bg-white"
+                />
+            ) : (
+                <div className="text-center p-4 flex flex-col items-center">
+                  <FileSelectedIcon />
+                  <p className="mt-2 text-content-100 font-medium break-all" title={fileName}>{fileName}</p>
+                </div>
+            )}
             <button
                 onClick={(e) => { e.stopPropagation(); if (!disabled) onRemoveFile(); }}
-                className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75 transition-colors disabled:cursor-not-allowed"
+                className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75 transition-colors disabled:cursor-not-allowed z-10"
                 aria-label="ファイルを削除"
                 disabled={disabled}
             >
@@ -80,7 +89,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, file
           </div>
         )}
         {disabled && progress !== null && (
-          <div className="absolute inset-0 bg-base-100/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-10">
+          <div className="absolute inset-0 bg-base-100/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-20">
             <LoadingSpinner />
             <p className="mt-4 text-content-100 font-semibold">抽出中... {Math.round(progress)}%</p>
           </div>

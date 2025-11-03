@@ -1,4 +1,5 @@
 
+
 export interface Adjustment {
   type: 'fixed' | 'per_area';
   area_type?: '建築面積' | '延床面積' | '外壁面積';
@@ -36,6 +37,9 @@ export interface OptionCategory {
     name: string;
     options: Option[];
 }
+
+export const DISHWASHER_IDS = ['bosch_45', 'bosch_60', 'miele_45', 'miele_60'];
+export const CUPBOARD_IDS = ['cupboard_940', 'cupboard_1690', 'cupboard_2550'];
 
 
 export const DEFAULT_SPEC_CATEGORIES: SpecCategory[] = [
@@ -165,6 +169,13 @@ export const DEFAULT_SPEC_CATEGORIES: SpecCategory[] = [
 
 export const DEFAULT_OPTION_CATEGORIES: OptionCategory[] = [
   {
+    id: 'roof_options',
+    name: '屋根オプション',
+    options: [
+      { id: 'snow_guard', name: '雪止め金物', costText: '+50,000円/一式', cost: { type: 'fixed', value: 50000 } },
+    ]
+  },
+  {
     id: 'application',
     name: '申請オプション',
     options: [
@@ -190,7 +201,7 @@ export const DEFAULT_OPTION_CATEGORIES: OptionCategory[] = [
       { id: 'central_ac', name: '全館空調システム', costText: '1,200,000円/一式', cost: { type: 'fixed', value: 1200000 } },
       { id: 'steel_stairs', name: '鉄骨階段', costText: '500,000円/一式', cost: { type: 'fixed', value: 500000 } },
       { id: 'attic_storage', name: '小屋裏収納', costText: '30,000円/帖', cost: { type: 'fixed', value: 30000 } }, // Assuming 1帖
-      { id: 'custom_furniture', name: '造作家具工事', costText: '500,000円/一式', cost: { type: 'fixed', value: 500000 } },
+      { id: 'custom_furniture', name: '造作家具工事', costText: '詳細入力', cost: { type: 'fixed', value: 0 } },
     ]
   }
 ];

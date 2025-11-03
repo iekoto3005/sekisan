@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { PlanData } from '../types';
 
 // Tell TypeScript that pdfjsLib is a global variable loaded from the script tag.
 declare const pdfjsLib: any;
@@ -7,18 +8,6 @@ declare const pdfjsLib: any;
 // It assumes pdfjsLib is loaded and available on the window object.
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
-}
-
-export interface PlanData {
-  物件名: string;
-  階数: string;
-  階高?: string;
-  建築面積: string;
-  延床面積: string;
-  外壁面積: string;
-  キッチン数: string;
-  洗面台数: string;
-  トイレ数: string;
 }
 
 /**
@@ -37,7 +26,7 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
   const page = await pdf.getPage(1); // Get the first page
   onProgress(15);
 
-  const viewport = page.getViewport({ scale: 2.0 }); // Increase scale for better resolution
+  const viewport = page.getViewport({ scale: 1.5 }); // Use a moderate scale to balance quality and size
 
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -51,13 +40,38 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
   await page.render({ canvasContext: context, viewport: viewport }).promise;
   onProgress(20);
 
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG with high quality
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92); // Use JPEG with high quality, slightly reduced to manage size
 
   return {
     base64Data: dataUrl.split(',')[1],
     mimeType: 'image/jpeg',
   };
 };
+
+export const generatePdfPreviewUrl = async (file: File): Promise<string> => {
+    if (typeof pdfjsLib === 'undefined') {
+      throw new Error('PDF.jsライブラリが読み込まれていません。');
+    }
+  
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const page = await pdf.getPage(1);
+  
+    const viewport = page.getViewport({ scale: 1.5 }); // Keep consistent with API conversion
+  
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+  
+    if (!context) {
+      throw new Error('Canvasコンテキストの取得に失敗しました。');
+    }
+  
+    await page.render({ canvasContext: context, viewport: viewport }).promise;
+  
+    return canvas.toDataURL('image/jpeg', 0.92); // Keep consistent with API conversion
+  };
 
 
 export const analyzeImage = async (planFile: File, onProgress: (p: number) => void): Promise<PlanData> => {

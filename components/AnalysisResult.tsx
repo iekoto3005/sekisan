@@ -1,6 +1,6 @@
 import React from 'react';
 import { LoadingSpinner } from './LoadingSpinner';
-import { PlanData } from '../services/geminiService';
+import { PlanData } from '../types';
 
 interface AnalysisResultProps {
   result: PlanData | null;
@@ -52,6 +52,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ result, isLoadin
         <dl className="text-content-100 font-sans space-y-3">
             {displayOrder.map((key) => {
                 const value = result[key];
+                if (key === '階高' && !value) return null; // 階高がなければ表示しない
                 return (
                     <div key={key} className="grid grid-cols-2 items-center border-b border-base-300/50 pb-2 last:border-b-0 gap-4">
                         <dt className="font-medium text-content-200">{key}</dt>

@@ -1,7 +1,8 @@
-import { PlanData } from '../services/geminiService';
+import { PlanData } from '../types';
 import { Estimate } from '../components/EstimateDetails';
 import { SpecCategory, OptionCategory } from '../data/specificationsData';
 import { CostItem } from '../data/costData';
+import { CustomFurnitureItem } from '../types';
 
 const DEFAULT_OPTION_PROFIT_MARGIN = 0.35;
 
@@ -59,17 +60,22 @@ export function calculateEstimate(
   costItems: CostItem[],
   specCategories: SpecCategory[],
   optionCategories: OptionCategory[],
+  atticStorageSize: number,
+  solarPowerKw: number,
+  customFurnitureItems: CustomFurnitureItem[]
 ): Estimate {
   const buildingArea = parseValue(analysis.建築面積);
   const totalFloorArea = parseValue(analysis.延床面積);
   const exteriorWallArea = parseValue(analysis.外壁面積);
   const toiletCount = parseValue(analysis.トイレ数) || 1;
+  const washStandCount = parseValue(analysis.洗面台数) || 1;
 
   const formulaContext = {
     buildingArea,
     totalFloorArea,
     exteriorWallArea,
-    toiletCount
+    toiletCount,
+    washStandCount
   };
 
   const getSpec = (categoryId: string, optionId: string) => {
@@ -81,12 +87,18 @@ export function calculateEstimate(
   let baseCosts: { [key: string]: { cost: number; specName: string, quantity: number | string; unit: string, profitMargin: number } } = {};
   
   costItems.forEach(item => {
+    if (item.id === 'furniture_work' && customFurnitureItems.length > 0) {
+      return; // Skip base furniture cost if custom items exist
+    }
+
     const cost = evaluateFormula(item.formula, formulaContext);
     let specName = '-';
     let quantity: number | string = 1;
     
     if (item.id === 'toilet_equipment') {
       quantity = toiletCount;
+    } else if (item.id === 'wash_stand_equipment') {
+      quantity = washStandCount;
     } else if (item.name === '塗装工事') {
         quantity = totalFloorArea;
         specName = getSpec('wall_ceiling', specs.wall_ceiling)?.name?.includes('塗装') ? getSpec('wall_ceiling', specs.wall_ceiling)?.name ?? '-' : '-';
@@ -137,33 +149,108 @@ export function calculateEstimate(
 
   // --- Options Costs ---
   let optionsCosts: { [key: string]: { cost: number; specName: string, quantity: number | string; unit: string, profitMargin: number } } = {};
+  
+  // Handle snow guard spec name modification
+  if (baseCosts['屋根工事']) {
+    if (options['snow_guard']) {
+        baseCosts['屋根工事'].specName += ' / 雪止め金物あり';
+    }
+  }
+  
   for(const category of optionCategories) {
       for(const option of category.options) {
           if(options[option.id]) {
-              let cost = 0;
-              if(option.cost.type === 'fixed') {
-                  cost = option.cost.value;
-              } else if (option.cost.type === 'per_area') {
-                  let area = 0;
-                  if (option.cost.area_type === '延床面積') area = totalFloorArea;
-                  cost = option.cost.value * area;
-              }
-              optionsCosts[option.name] = { cost, specName: '-', quantity: 1, unit: '式', profitMargin: DEFAULT_OPTION_PROFIT_MARGIN };
+            if (option.id === 'custom_furniture') {
+                continue; // Handled separately
+            }
+            
+            // Handle snow guard cost addition and prevent it from becoming a separate line item
+            if (option.id === 'snow_guard') {
+                if (baseCosts['屋根工事']) {
+                    baseCosts['屋根工事'].cost += option.cost.value;
+                }
+                continue; 
+            }
+
+            let cost = 0;
+            let quantity: number | string = 1;
+            let unit = '式';
+            let specName = '-';
+
+            if (option.id === 'attic_storage') {
+                const size = atticStorageSize > 0 ? atticStorageSize : 0;
+                cost = option.cost.value * size;
+                quantity = size;
+                unit = '帖';
+            } else if (option.id === 'solar_power') {
+                if (solarPowerKw > 0) {
+                    const panelPowerKw = 0.51; // 510W per panel
+                    const numberOfPanels = Math.ceil(solarPowerKw / panelPowerKw);
+                    cost = option.cost.value * numberOfPanels;
+                    quantity = numberOfPanels;
+                    unit = '枚';
+                    specName = `${(numberOfPanels * panelPowerKw).toFixed(2)}kW`;
+                } else {
+                    cost = 0;
+                    quantity = 0;
+                }
+            } else {
+                if (option.cost.type === 'fixed') {
+                    cost = option.cost.value;
+                } else if (option.cost.type === 'per_area') {
+                    let area = 0;
+                    if (option.cost.area_type === '延床面積') area = totalFloorArea;
+                    cost = option.cost.value * area;
+                }
+            }
+            optionsCosts[option.name] = { cost, specName, quantity, unit, profitMargin: DEFAULT_OPTION_PROFIT_MARGIN };
           }
       }
   }
+  
+  // --- Custom Furniture Calculation ---
+  if (customFurnitureItems.length > 0) {
+      const furnitureTypePrice: { [key: string]: number } = {
+          open: 100000,
+          hinged: 200000,
+          drawer: 300000,
+      };
+
+      const customFurnitureTotalCost = customFurnitureItems.reduce((total, item) => {
+          const volume = (item.width || 0) * (item.depth || 0) * (item.height || 0);
+          const pricePerCubicMeter = furnitureTypePrice[item.type] || 0;
+          const itemCost = volume * pricePerCubicMeter;
+          return total + itemCost;
+      }, 0);
+
+      if (customFurnitureTotalCost > 0) {
+          const furnitureCostItem = costItems.find(item => item.id === 'furniture_work');
+          const profitMargin = furnitureCostItem ? furnitureCostItem.profitMargin : DEFAULT_OPTION_PROFIT_MARGIN;
+
+          optionsCosts['造作家具工事'] = {
+              cost: customFurnitureTotalCost,
+              specName: `${customFurnitureItems.length} 点`,
+              quantity: 1,
+              unit: '式',
+              profitMargin: profitMargin
+          };
+      }
+  }
+
 
   const allItems = { ...baseCosts, ...optionsCosts };
 
   const estimateItems = Object.entries(allItems).map(([name, data]) => {
     const price = data.profitMargin < 1 ? data.cost / (1 - data.profitMargin) : data.cost;
+    const subtotal = price;
+
     return {
       name,
       ...data,
       price,
-      subtotal: price,
+      subtotal,
     };
-  });
+  }).filter(item => item.cost !== 0); // Don't show items with zero cost
 
   const totalCost = estimateItems.reduce((sum, item) => sum + item.cost, 0);
   const totalPrice = estimateItems.reduce((sum, item) => sum + item.subtotal, 0);

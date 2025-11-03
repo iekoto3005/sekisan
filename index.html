@@ -4,8 +4,33 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gemini画像アナライザー</title>
+    <title>SumrAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @media print {
+        .print-hidden {
+          display: none;
+        }
+        body * {
+          visibility: hidden;
+        }
+        #print-area, #print-area * {
+          visibility: visible;
+        }
+        #print-area {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          padding: 1rem;
+          color: black;
+        }
+        .break-before-page {
+          page-break-before: always;
+        }
+      }
+    </style>
     <script>
       tailwind.config = {
         theme: {

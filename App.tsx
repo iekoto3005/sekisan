@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { analyzeImage, generatePdfPreviewUrl } from './services/geminiService';
 import { Header } from './components/Header';
@@ -17,13 +18,13 @@ const ADMIN_PASSWORD = "0000"; // Simple hardcoded password
 const CONFIG_STORAGE_KEY = 'gemini-estimate-config';
 
 // Add type definition for the aistudio object
-// FIX: The property 'aistudio' was declared with an inline type, causing a conflict
-// with another global declaration. Defined a named interface 'AIStudio' to resolve this.
-interface AIStudio {
-  hasSelectedApiKey: () => Promise<boolean>;
-  openSelectKey: () => Promise<void>;
-}
+// FIX: Moved the AIStudio interface inside the `declare global` block to resolve a
+// subsequent property declaration error, ensuring the type is declared in the global scope.
 declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
   interface Window {
     aistudio?: AIStudio;
   }
@@ -188,12 +189,13 @@ export default function App() {
 
   useEffect(() => {
     const checkApiKey = async () => {
-      // In AI Studio, use the key selection flow.
       if (window.aistudio) {
+        // In AI Studio, use the key selection flow.
         setIsKeyReady(await window.aistudio.hasSelectedApiKey());
       } else {
-        // Outside AI Studio, the key selection UI won't be available.
-        // isKeyReady will remain false, and the UI will show an error.
+        // Outside AI Studio, assume the key is in the environment.
+        // The service will throw an error if it's missing.
+        setIsKeyReady(true);
       }
     };
     checkApiKey();
@@ -429,9 +431,11 @@ export default function App() {
         console.error(e);
 
         if (errorMessage.includes("API_KEY") || errorMessage.includes("Requested entity was not found")) {
-            setError("APIキーが無効、または設定されていません。再度キーを選択してください。");
             if (window.aistudio) {
+              setError("APIキーが無効、または設定されていません。再度キーを選択してください。");
               setIsKeyReady(false);
+            } else {
+              setError("APIキーが無効、または設定されていません。環境変数をご確認ください。");
             }
         } else {
             setError(`抽出に失敗しました: ${errorMessage}`);

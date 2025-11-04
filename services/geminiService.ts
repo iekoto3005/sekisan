@@ -1,19 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import * as pdfjsLib from 'pdfjs-dist';
 import { PlanData } from '../types';
 
-// Tell TypeScript that pdfjsLib is a global variable loaded from the script tag.
-declare const pdfjsLib: any;
-
-// This function ensures the PDF.js worker is configured.
-// It is called lazily, just before it's needed, to avoid race conditions
-// with the script that loads pdf.js.
-const setupPdfJsWorker = () => {
-    // Check if the library is loaded and the worker is not already configured.
-    // It's safe to re-set the workerSrc property.
-    if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
-    }
-};
+// Configure the worker with the full CDN URL. This is more robust than relying on global script loading order.
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
 
 
 /**
@@ -22,12 +12,6 @@ const setupPdfJsWorker = () => {
  * @returns A promise that resolves to an object containing the base64 data and mime type.
  */
 const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => void): Promise<{ base64Data: string; mimeType: string; }> => {
-  setupPdfJsWorker(); // Attempt to configure the worker.
-  
-  if (typeof pdfjsLib === 'undefined') {
-    throw new Error('PDF.jsライブラリが読み込まれていません。');
-  }
-
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   onProgress(10);
@@ -56,12 +40,6 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
 };
 
 export const generatePdfPreviewUrl = async (file: File): Promise<string> => {
-    setupPdfJsWorker(); // Attempt to configure the worker.
-
-    if (typeof pdfjsLib === 'undefined') {
-      throw new Error('PDF.jsライブラリが読み込まれていません。');
-    }
-  
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const page = await pdf.getPage(1);

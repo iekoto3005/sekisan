@@ -1,9 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist';
 import { PlanData } from '../types';
 
 // Configure the worker with the full CDN URL. This is more robust than relying on global script loading order.
-GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
 
 
 /**
@@ -13,7 +13,7 @@ GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.
  */
 const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => void): Promise<{ base64Data: string; mimeType: string; }> => {
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   onProgress(10);
   const page = await pdf.getPage(1); // Get the first page
   onProgress(15);
@@ -41,7 +41,7 @@ const convertPdfToImageBase64 = async (file: File, onProgress: (p: number) => vo
 
 export const generatePdfPreviewUrl = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const page = await pdf.getPage(1);
   
     const viewport = page.getViewport({ scale: 1.5 }); // Keep consistent with API conversion

@@ -16,6 +16,18 @@ import { AppState, CustomFurnitureItem, PlanData, DeepFoundationParams } from '.
 const ADMIN_PASSWORD = "0000"; // Simple hardcoded password
 const CONFIG_STORAGE_KEY = 'gemini-estimate-config';
 
+// Add type definition for the aistudio object
+// FIX: The property 'aistudio' was declared with an inline type, causing a conflict
+// with another global declaration. Defined a named interface 'AIStudio' to resolve this.
+interface AIStudio {
+  hasSelectedApiKey: () => Promise<boolean>;
+  openSelectKey: () => Promise<void>;
+}
+declare global {
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}
 
 // --- Print Preview Modal Component ---
 const PrintPreviewModal: React.FC<{
@@ -172,6 +184,20 @@ export default function App() {
   const [contactLastName, setContactLastName] = useState<string>('');
   const [contactFirstName, setContactFirstName] = useState<string>('');
 
+  const [isKeyReady, setIsKeyReady] = useState(false);
+
+  useEffect(() => {
+    const checkApiKey = async () => {
+      // In AI Studio, use the key selection flow.
+      if (window.aistudio) {
+        setIsKeyReady(await window.aistudio.hasSelectedApiKey());
+      } else {
+        // Outside AI Studio, the key selection UI won't be available.
+        // isKeyReady will remain false, and the UI will show an error.
+      }
+    };
+    checkApiKey();
+  }, []);
 
   useEffect(() => {
     try {
@@ -210,6 +236,19 @@ export default function App() {
       setEstimate(null);
     }
   }, [analysis, specifications, options, costItems, specCategories, optionCategories, atticStorageSize, solarPowerKw, customFurnitureItems, deepFoundation]);
+  
+  const handleSelectKey = async () => {
+    if (window.aistudio) {
+        try {
+            await window.aistudio.openSelectKey();
+            // After selection, assume key is ready. Verification happens on API call.
+            setIsKeyReady(true);
+        } catch (e) {
+            console.error("Could not open API key selector:", e);
+            setError("APIキーセレクターを開けませんでした。");
+        }
+    }
+  };
 
   // --- File and State Handlers ---
   const fileToBase64 = (file: File): Promise<string> =>
@@ -390,7 +429,10 @@ export default function App() {
         console.error(e);
 
         if (errorMessage.includes("API_KEY") || errorMessage.includes("Requested entity was not found")) {
-            setError("APIキーが無効、または設定されていません。環境変数をご確認ください。");
+            setError("APIキーが無効、または設定されていません。再度キーを選択してください。");
+            if (window.aistudio) {
+              setIsKeyReady(false);
+            }
         } else {
             setError(`抽出に失敗しました: ${errorMessage}`);
         }
@@ -470,6 +512,8 @@ export default function App() {
                     disabled={isLoading}
                     progress={progress}
                     previewImageUrl={previewImageUrl}
+                    isKeyReady={isKeyReady}
+                    onSelectKey={handleSelectKey}
                 />
               </div>
               <SpecificationSelector specs={specifications} options={options} onSpecChange={handleSpecChange} onOptionChange={handleOptionChange} specCategories={specCategories} optionCategories={optionCategories} disabled={!analysis} foreignDishwasher={foreignDishwasher} onForeignDishwasherChange={(value) => handleComplexOptionChange(value, DISHWASHER_IDS, setForeignDishwasher)} cupboard={cupboard} onCupboardChange={(value) => handleComplexOptionChange(value, CUPBOARD_IDS, setCupboard)} atticStorageSize={atticStorageSize} onAtticStorageSizeChange={setAtticStorageSize} solarPowerKw={solarPowerKw} onSolarPowerKwChange={setSolarPowerKw} customFurnitureItems={customFurnitureItems} onAddCustomFurnitureItem={handleAddCustomFurnitureItem} onRemoveCustomFurnitureItem={handleRemoveCustomFurnitureItem} onUpdateCustomFurnitureItem={handleUpdateCustomFurnitureItem} deepFoundation={deepFoundation} onUpdateDeepFoundation={handleUpdateDeepFoundation} />

@@ -8,6 +8,8 @@ interface ImageUploaderProps {
   disabled?: boolean;
   progress?: number | null;
   previewImageUrl?: string | null;
+  isKeyReady: boolean;
+  onSelectKey: () => void;
 }
 
 const PdfIcon = () => (
@@ -22,7 +24,16 @@ const FileSelectedIcon = () => (
     </svg>
 );
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, fileName, onRemoveFile, disabled = false, progress = null, previewImageUrl = null }) => {
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ 
+  onFileChange, 
+  fileName, 
+  onRemoveFile, 
+  disabled = false, 
+  progress = null, 
+  previewImageUrl = null,
+  isKeyReady,
+  onSelectKey 
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +52,37 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, file
         fileInputRef.current.click();
     }
   };
+
+  if (!isKeyReady) {
+    const isAistudioAvailable = !!window.aistudio;
+    return (
+      <div className="w-full">
+        <div className="relative w-full aspect-video bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex flex-col items-center justify-center text-center p-4">
+          {isAistudioAvailable ? (
+            <>
+              <h3 className="text-lg font-semibold text-content-100">APIキーが必要です</h3>
+              <p className="mt-2 text-sm text-content-200">続行するには、APIキーを選択してください。</p>
+              <button
+                onClick={onSelectKey}
+                className="mt-4 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-secondary transition-colors"
+                aria-label="APIキーを選択"
+              >
+                APIキーを選択
+              </button>
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="mt-4 font-semibold text-red-500">エラーが発生しました</p>
+              <p className="text-sm text-content-200 mt-1">APIキー選択機能がこの環境では利用できません。<br />このアプリはGoogle AI Studio環境で実行する必要があります。</p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

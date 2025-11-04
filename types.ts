@@ -1,4 +1,5 @@
 
+
 export interface CostItem {
   id: string;
   name: string;
@@ -13,6 +14,13 @@ export interface CustomFurnitureItem {
   width: number;
   depth: number;
   height: number;
+}
+
+export interface DeepFoundationParams {
+  A: string;
+  B: string;
+  C: string;
+  landscaping: boolean;
 }
 
 export interface PlanData {
@@ -46,4 +54,5 @@ export interface AppState {
   companyName: string;
   contactLastName: string;
   contactFirstName: string;
+  deepFoundation?: DeepFoundationParams;
 }

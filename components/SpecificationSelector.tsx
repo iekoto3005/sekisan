@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { SpecCategory, OptionCategory, DISHWASHER_IDS, CUPBOARD_IDS } from '../data/specificationsData';
-import { CustomFurnitureItem } from '../types';
+import { CustomFurnitureItem, DeepFoundationParams } from '../types';
 
 interface SpecificationSelectorProps {
   specs: { [key: string]: string };
@@ -22,6 +23,8 @@ interface SpecificationSelectorProps {
   onAddCustomFurnitureItem: () => void;
   onRemoveCustomFurnitureItem: (id: string) => void;
   onUpdateCustomFurnitureItem: (id: string, field: keyof Omit<CustomFurnitureItem, 'id'>, value: string | number) => void;
+  deepFoundation: DeepFoundationParams;
+  onUpdateDeepFoundation: (field: keyof DeepFoundationParams, value: string | boolean) => void;
 }
 
 const SpecRadioOption: React.FC<{
@@ -86,7 +89,9 @@ export const SpecificationSelector: React.FC<SpecificationSelectorProps> = ({
   customFurnitureItems,
   onAddCustomFurnitureItem,
   onRemoveCustomFurnitureItem,
-  onUpdateCustomFurnitureItem
+  onUpdateCustomFurnitureItem,
+  deepFoundation,
+  onUpdateDeepFoundation
 }) => {
   const roofOptionsCategory = optionCategories.find(c => c.id === 'roof_options');
   const snowGuardOption = roofOptionsCategory?.options.find(o => o.id === 'snow_guard');
@@ -115,6 +120,15 @@ export const SpecificationSelector: React.FC<SpecificationSelectorProps> = ({
       onCupboardChange('');
     }
   };
+
+  const A = parseFloat(deepFoundation.A) || 0;
+  const B = parseFloat(deepFoundation.B) || 0;
+  const C = parseFloat(deepFoundation.C) || 0;
+  
+  const X = A - (B * 0.05);
+  const showLandscapingCheckbox = X > 0.2 && X < 0.3;
+  const isRequired = (X > 0.2 && X < 0.3 && !deepFoundation.landscaping) || X >= 0.3;
+  const deepFoundationCost = isRequired ? X * C * 50000 : 0;
 
 
   return (
@@ -194,6 +208,44 @@ export const SpecificationSelector: React.FC<SpecificationSelectorProps> = ({
                                   onChange={(value) => onOptionChange(option.id, value)}
                                   disabled={disabled}
                               />
+                              {isChecked && option.id === 'deep_foundation' && (
+                                <div className="pl-8 pt-2 space-y-3 border-l-2 border-base-300 ml-4 mt-2 pb-2">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center space-x-2">
+                                            <label className="text-xs text-content-200 w-48 shrink-0">A 道路境界線と敷地の高低差 (m)</label>
+                                            <input type="number" value={deepFoundation.A} onChange={(e) => onUpdateDeepFoundation('A', e.target.value)} disabled={disabled} className="w-full text-sm bg-base-100 rounded-md px-2 py-1 border border-base-300 focus:bg-white focus:border-brand-primary focus:ring-1 focus:ring-brand-primary focus:outline-none"/>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <label className="text-xs text-content-200 w-48 shrink-0">B 道路境界線から建物までの距離 (m)</label>
+                                            <input type="number" value={deepFoundation.B} onChange={(e) => onUpdateDeepFoundation('B', e.target.value)} disabled={disabled} className="w-full text-sm bg-base-100 rounded-md px-2 py-1 border border-base-300 focus:bg-white focus:border-brand-primary focus:ring-1 focus:ring-brand-primary focus:outline-none"/>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <label className="text-xs text-content-200 w-48 shrink-0">C 高低差のある面に接する建物の長さ (m)</label>
+                                            <input type="number" value={deepFoundation.C} onChange={(e) => onUpdateDeepFoundation('C', e.target.value)} disabled={disabled} className="w-full text-sm bg-base-100 rounded-md px-2 py-1 border border-base-300 focus:bg-white focus:border-brand-primary focus:ring-1 focus:ring-brand-primary focus:outline-none"/>
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 text-sm text-content-200">
+                                        {A > 0 && B > 0 && C > 0 ? (
+                                        <>
+                                            <p>計算値 X (A - B*0.05): <span className="font-semibold text-content-100">{X.toFixed(3)}</span></p>
+                                            {X <= 0.2 && <p className="text-green-600 font-medium">深基礎は不要です。</p>}
+                                            {showLandscapingCheckbox && (
+                                            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                                                <label className="flex items-center space-x-2">
+                                                <input type="checkbox" checked={deepFoundation.landscaping} onChange={(e) => onUpdateDeepFoundation('landscaping', e.target.checked)} disabled={disabled} className="h-4 w-4 text-brand-primary focus:ring-brand-secondary rounded"/>
+                                                <span>外構工事の工夫（花壇等）で対応する (深基礎不要)</span>
+                                                </label>
+                                            </div>
+                                            )}
+                                            {X >= 0.3 && <p className="text-red-600 font-medium">深基礎が必要です。</p>}
+                                            {deepFoundationCost > 0 && <p>追加費用: <span className="font-semibold text-content-100">{new Intl.NumberFormat('ja-JP').format(deepFoundationCost)}円</span></p>}
+                                        </>
+                                        ) : (
+                                        <p>A, B, C を入力して計算</p>
+                                        )}
+                                    </div>
+                                </div>
+                              )}
                               {isChecked && option.id === 'attic_storage' && (
                                 <div className="pl-16 -mt-1 pb-2 flex items-center space-x-2">
                                   <input

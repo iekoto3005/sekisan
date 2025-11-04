@@ -12,7 +12,7 @@ import { INITIAL_SPECS, INITIAL_OPTIONS, DEFAULT_SPEC_CATEGORIES, DEFAULT_OPTION
 import { CostItem, DEFAULT_COST_ITEMS } from './data/costData';
 import { PasswordModal } from './components/PasswordModal';
 import { CostEditorModal } from './components/CostEditorModal';
-import { AppState, CustomFurnitureItem, PlanData } from './types';
+import { AppState, CustomFurnitureItem, PlanData, DeepFoundationParams } from './types';
 
 const ADMIN_PASSWORD = "0000"; // Simple hardcoded password
 const CONFIG_STORAGE_KEY = 'gemini-estimate-config';
@@ -156,6 +156,8 @@ export default function App() {
   const [foreignDishwasher, setForeignDishwasher] = useState<string>(() => DISHWASHER_IDS.find(id => INITIAL_OPTIONS[id]) || '');
   const [cupboard, setCupboard] = useState<string>(() => CUPBOARD_IDS.find(id => INITIAL_OPTIONS[id]) || '');
   const [customFurnitureItems, setCustomFurnitureItems] = useState<CustomFurnitureItem[]>([]);
+  const [deepFoundation, setDeepFoundation] = useState<DeepFoundationParams>({ A: '', B: '', C: '', landscaping: false });
+
 
   const [costItems, setCostItems] = useState<CostItem[]>(DEFAULT_COST_ITEMS);
   const [specCategories, setSpecCategories] = useState<SpecCategory[]>(DEFAULT_SPEC_CATEGORIES);
@@ -196,13 +198,19 @@ export default function App() {
     if (analysis) {
       const newEstimate = calculateEstimate(
         analysis, specifications, options, costItems, specCategories, optionCategories,
-        parseFloat(atticStorageSize) || 0, parseFloat(solarPowerKw) || 0, customFurnitureItems
+        parseFloat(atticStorageSize) || 0, parseFloat(solarPowerKw) || 0, customFurnitureItems,
+        {
+          A: parseFloat(deepFoundation.A) || 0,
+          B: parseFloat(deepFoundation.B) || 0,
+          C: parseFloat(deepFoundation.C) || 0,
+          landscaping: deepFoundation.landscaping,
+        }
       );
       setEstimate(newEstimate);
     } else {
       setEstimate(null);
     }
-  }, [analysis, specifications, options, costItems, specCategories, optionCategories, atticStorageSize, solarPowerKw, customFurnitureItems]);
+  }, [analysis, specifications, options, costItems, specCategories, optionCategories, atticStorageSize, solarPowerKw, customFurnitureItems, deepFoundation]);
 
   // --- File and State Handlers ---
   const fileToBase64 = (file: File): Promise<string> =>
@@ -248,6 +256,7 @@ export default function App() {
         companyName,
         contactLastName,
         contactFirstName,
+        deepFoundation,
     };
   };
 
@@ -305,6 +314,7 @@ export default function App() {
                 setCompanyName(state.companyName || '株式会社トランスワークス');
                 setContactLastName(state.contactLastName || '');
                 setContactFirstName(state.contactFirstName || '');
+                setDeepFoundation(state.deepFoundation || { A: '', B: '', C: '', landscaping: false });
 
                 setError('');
             } catch (err) {
@@ -395,6 +405,9 @@ export default function App() {
             setCustomFurnitureItems([]);
         }
     }
+    if (optionId === 'deep_foundation' && !value) {
+        setDeepFoundation({ A: '', B: '', C: '', landscaping: false });
+    }
     setOptions(prev => ({ ...prev, [optionId]: value }));
   };
   
@@ -410,7 +423,8 @@ export default function App() {
   const handleAddCustomFurnitureItem = () => { setCustomFurnitureItems(prev => [...prev, { id: `cf-${Date.now()}`, type: 'open', width: 1.5, depth: 0.45, height: 0.85, }]); };
   const handleRemoveCustomFurnitureItem = (id: string) => { setCustomFurnitureItems(prev => { const newItems = prev.filter(item => item.id !== id); if (newItems.length === 0) { setOptions(prevOpts => ({...prevOpts, custom_furniture: false})); } return newItems; }); };
   const handleUpdateCustomFurnitureItem = (id: string, field: keyof Omit<CustomFurnitureItem, 'id'>, value: string | number) => { setCustomFurnitureItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item)); };
-  
+  const handleUpdateDeepFoundation = (field: keyof DeepFoundationParams, value: string | boolean) => { setDeepFoundation(prev => ({ ...prev, [field]: value })); };
+
   const handleAdminClick = () => { setIsPasswordModalOpen(true); };
   const handlePasswordSubmit = (password: string) => { if (password === ADMIN_PASSWORD) { setPasswordError(null); setIsPasswordModalOpen(false); setIsCostEditorOpen(true); } else { setPasswordError("パスワードが正しくありません。"); } };
   const handleAdminDataSave = (updatedCostItems: CostItem[], updatedSpecCategories: SpecCategory[], updatedOptionCategories: OptionCategory[]) => {
@@ -443,7 +457,7 @@ export default function App() {
                 <h2 className="text-2xl font-bold text-content-100">1. プランをアップロード</h2>
                 <ImageUploader onFileChange={handleFileSelect} fileName={planFile?.name || null} onRemoveFile={handleRemoveFile} disabled={isLoading} progress={progress} previewImageUrl={previewImageUrl} />
               </div>
-              <SpecificationSelector specs={specifications} options={options} onSpecChange={handleSpecChange} onOptionChange={handleOptionChange} specCategories={specCategories} optionCategories={optionCategories} disabled={!analysis} foreignDishwasher={foreignDishwasher} onForeignDishwasherChange={(value) => handleComplexOptionChange(value, DISHWASHER_IDS, setForeignDishwasher)} cupboard={cupboard} onCupboardChange={(value) => handleComplexOptionChange(value, CUPBOARD_IDS, setCupboard)} atticStorageSize={atticStorageSize} onAtticStorageSizeChange={setAtticStorageSize} solarPowerKw={solarPowerKw} onSolarPowerKwChange={setSolarPowerKw} customFurnitureItems={customFurnitureItems} onAddCustomFurnitureItem={handleAddCustomFurnitureItem} onRemoveCustomFurnitureItem={handleRemoveCustomFurnitureItem} onUpdateCustomFurnitureItem={handleUpdateCustomFurnitureItem} />
+              <SpecificationSelector specs={specifications} options={options} onSpecChange={handleSpecChange} onOptionChange={handleOptionChange} specCategories={specCategories} optionCategories={optionCategories} disabled={!analysis} foreignDishwasher={foreignDishwasher} onForeignDishwasherChange={(value) => handleComplexOptionChange(value, DISHWASHER_IDS, setForeignDishwasher)} cupboard={cupboard} onCupboardChange={(value) => handleComplexOptionChange(value, CUPBOARD_IDS, setCupboard)} atticStorageSize={atticStorageSize} onAtticStorageSizeChange={setAtticStorageSize} solarPowerKw={solarPowerKw} onSolarPowerKwChange={setSolarPowerKw} customFurnitureItems={customFurnitureItems} onAddCustomFurnitureItem={handleAddCustomFurnitureItem} onRemoveCustomFurnitureItem={handleRemoveCustomFurnitureItem} onUpdateCustomFurnitureItem={handleUpdateCustomFurnitureItem} deepFoundation={deepFoundation} onUpdateDeepFoundation={handleUpdateDeepFoundation} />
             </div>
             <div className="lg:col-span-8 flex flex-col space-y-6">
               <div className="flex flex-col space-y-6">

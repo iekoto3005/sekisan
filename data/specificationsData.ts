@@ -1,5 +1,6 @@
 
 
+
 export interface Adjustment {
   type: 'fixed' | 'per_area';
   area_type?: '建築面積' | '延床面積' | '外壁面積' | '洋室床面積' | '水廻り床面積';
@@ -196,6 +197,7 @@ export const DEFAULT_OPTION_CATEGORIES: OptionCategory[] = [
     id: 'other',
     name: 'その他オプション',
     options: [
+      { id: 'deep_foundation', name: '深基礎工事', costText: '詳細入力', cost: { type: 'fixed', value: 0 } },
       { id: 'solar_power', name: '太陽光発電', costText: '120,000円/枚', cost: { type: 'fixed', value: 120000 } }, // Assuming 1枚 as default
       { id: 'storage_battery', name: '蓄電池', costText: '1,200,000円/一式', cost: { type: 'fixed', value: 1200000 } },
       { id: 'bosch_45', name: 'BOSCH食洗機 45cm', costText: '180,000円/一式', cost: { type: 'fixed', value: 180000 } },

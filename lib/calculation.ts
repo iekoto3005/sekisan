@@ -1,8 +1,9 @@
+
 import { PlanData } from '../types';
 import { Estimate } from '../components/EstimateDetails';
 import { SpecCategory, OptionCategory } from '../data/specificationsData';
 import { CostItem } from '../data/costData';
-import { CustomFurnitureItem } from '../types';
+import { CustomFurnitureItem, DeepFoundationParams } from '../types';
 
 const DEFAULT_OPTION_PROFIT_MARGIN = 0.35;
 
@@ -57,6 +58,13 @@ const getSpecAdjustment = (
 };
 
 
+interface DeepFoundationCalcParams {
+  A: number;
+  B: number;
+  C: number;
+  landscaping: boolean;
+}
+
 export function calculateEstimate(
   analysis: PlanData,
   specs: { [key: string]: string },
@@ -66,7 +74,8 @@ export function calculateEstimate(
   optionCategories: OptionCategory[],
   atticStorageSize: number,
   solarPowerKw: number,
-  customFurnitureItems: CustomFurnitureItem[]
+  customFurnitureItems: CustomFurnitureItem[],
+  deepFoundationParams: DeepFoundationCalcParams
 ): Estimate {
   const buildingArea = parseValue(analysis.建築面積);
   const totalFloorArea = parseValue(analysis.延床面積);
@@ -199,6 +208,33 @@ export function calculateEstimate(
                     baseCosts['屋根工事'].cost += option.cost.value;
                 }
                 continue; 
+            }
+
+            if (option.id === 'deep_foundation') {
+                const { A, B, C, landscaping } = deepFoundationParams;
+                if (A > 0 && B > 0 && C > 0) {
+                    const X = A - (B * 0.05);
+                    let isRequired = false;
+                    if (X > 0.2 && X < 0.3) {
+                        isRequired = !landscaping;
+                    } else if (X >= 0.3) {
+                        isRequired = true;
+                    }
+
+                    if (isRequired) {
+                        const cost = X * C * 50000;
+                        if (cost > 0) {
+                            optionsCosts['深基礎工事'] = {
+                                cost,
+                                specName: `H差:${X.toFixed(3)}m L:${C}m`,
+                                quantity: 1,
+                                unit: '式',
+                                profitMargin: DEFAULT_OPTION_PROFIT_MARGIN
+                            };
+                        }
+                    }
+                }
+                continue;
             }
 
             let cost = 0;

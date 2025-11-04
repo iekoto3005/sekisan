@@ -8,6 +8,8 @@ interface ImageUploaderProps {
   disabled?: boolean;
   progress?: number | null;
   previewImageUrl?: string | null;
+  isKeyReady: boolean;
+  onSelectKey: () => void;
 }
 
 const PdfIcon = () => (
@@ -22,13 +24,19 @@ const FileSelectedIcon = () => (
     </svg>
 );
 
+const KeyIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-content-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H5v-2H3v-2H1v-4a6 6 0 0110.257-4.257M15 7a2 2 0 012 2M3 7a2 2 0 012-2m0 10v4m0 0v2m0-2h2m-2 0h-2" />
+    </svg>
+);
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, fileName, onRemoveFile, disabled = false, progress = null, previewImageUrl = null }) => {
+
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, fileName, onRemoveFile, disabled = false, progress = null, previewImageUrl = null, isKeyReady, onSelectKey }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && !disabled) {
+    if (file && !disabled && isKeyReady) {
       onFileChange(file);
     }
     // Reset file input to allow uploading the same file again after removing it
@@ -38,7 +46,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, file
   };
 
   const handleContainerClick = () => {
-    if (!fileName && fileInputRef.current && !disabled) {
+    if (isKeyReady && !fileName && fileInputRef.current && !disabled) {
         fileInputRef.current.click();
     }
   };
@@ -51,13 +59,27 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileChange, file
         onChange={handleFileChange}
         className="hidden"
         accept="application/pdf"
-        disabled={disabled}
+        disabled={disabled || !isKeyReady}
       />
       <div
         onClick={handleContainerClick}
-        className={`relative w-full aspect-video bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex items-center justify-center transition-colors duration-200 overflow-hidden ${!fileName && !disabled ? 'hover:border-brand-primary cursor-pointer' : ''} ${disabled && !progress ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`relative w-full aspect-video bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex items-center justify-center transition-colors duration-200 overflow-hidden ${isKeyReady && !fileName && !disabled ? 'hover:border-brand-primary cursor-pointer' : ''} ${(!isKeyReady || disabled) && !progress ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        {fileName ? (
+        {!isKeyReady ? (
+            <div className="text-center p-4 flex flex-col items-center">
+                <KeyIcon />
+                <p className="mt-4 mb-4 text-content-200">積算を開始するにはAPIキーが必要です。</p>
+                <button
+                    onClick={(e) => { e.stopPropagation(); onSelectKey(); }}
+                    className="px-5 py-2.5 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                >
+                    APIキーを設定
+                </button>
+                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-xs text-content-200 mt-3 hover:underline">
+                    APIキーの請求について
+                </a>
+            </div>
+        ) : fileName ? (
           <>
             {previewImageUrl ? (
                 <img 

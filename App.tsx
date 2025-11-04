@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { analyzeImage, generatePdfPreviewUrl } from './services/geminiService';
 import { Header } from './components/Header';
@@ -172,6 +171,7 @@ export default function App() {
   const [companyName, setCompanyName] = useState<string>('株式会社トランスワークス');
   const [contactLastName, setContactLastName] = useState<string>('');
   const [contactFirstName, setContactFirstName] = useState<string>('');
+  const [isKeyReady, setIsKeyReady] = useState(false);
 
 
   useEffect(() => {
@@ -211,6 +211,44 @@ export default function App() {
       setEstimate(null);
     }
   }, [analysis, specifications, options, costItems, specCategories, optionCategories, atticStorageSize, solarPowerKw, customFurnitureItems, deepFoundation]);
+
+  useEffect(() => {
+    // Check key status when the component mounts.
+    const checkKeyStatus = async () => {
+        try {
+            // @ts-ignore
+            if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
+                // @ts-ignore
+                const hasKey = await window.aistudio.hasSelectedApiKey();
+                setIsKeyReady(hasKey);
+            } else {
+                console.warn("window.aistudio.hasSelectedApiKey not found.");
+                setIsKeyReady(false);
+            }
+        } catch (e) {
+            console.error("Error checking for API key:", e);
+            setIsKeyReady(false);
+        }
+    };
+    checkKeyStatus();
+  }, []);
+
+  const handleSelectKey = async () => {
+    try {
+        // @ts-ignore
+        if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+            // @ts-ignore
+            await window.aistudio.openSelectKey();
+            // Assume the user selected a key and update the UI.
+            setIsKeyReady(true);
+        } else {
+            setError("APIキー選択機能がこの環境では利用できません。");
+        }
+    } catch (e) {
+        console.error("Failed to open API key selection dialog:", e);
+        setError("APIキー選択ダイアログを開けませんでした。");
+    }
+  };
 
   // --- File and State Handlers ---
   const fileToBase64 = (file: File): Promise<string> =>
@@ -373,34 +411,36 @@ export default function App() {
   
 
   const handleFileSelect = async (file: File) => {
-    setProgress(0); setPlanFile(file); setAnalysis(null); setError(''); setIsLoading(true); setPreviewImageUrl(null);
-    try {
-      // @ts-ignore
-      if (!process.env.API_KEY && window.aistudio) {
-        // @ts-ignore
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        if (!hasKey) {
-            // @ts-ignore
-            await window.aistudio.openSelectKey();
-            // After this call, we assume the key is available in process.env.API_KEY
-        }
-      }
+    if (!isKeyReady) {
+        setError("APIキーが設定されていません。アップロードエリアのボタンから設定してください。");
+        return;
+    }
 
-      const previewUrl = await generatePdfPreviewUrl(file);
-      setPreviewImageUrl(previewUrl);
-      const result = await analyzeImage(file, setProgress);
-      if (!result.階高) {
-        if (result.階数?.includes('2階')) result.階高 = '１階3000㎜, 2階2850㎜';
-        else if (result.階数?.includes('平屋') || result.階数?.includes('1階')) result.階高 = '3000㎜';
-      }
-      setAnalysis(result);
+    setProgress(0); setPlanFile(file); setAnalysis(null); setError(''); setIsLoading(true); setPreviewImageUrl(null);
+  
+    try {
+        const previewUrl = await generatePdfPreviewUrl(file);
+        setPreviewImageUrl(previewUrl);
+        
+        let result = await analyzeImage(file, setProgress);
+
+        if (!result.階高) {
+            if (result.階数?.includes('2階')) result.階高 = '１階3000㎜, 2階2850㎜';
+            else if (result.階数?.includes('平屋') || result.階数?.includes('1階')) result.階高 = '3000㎜';
+        }
+        setAnalysis(result);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : '不明なエラーが発生しました。';
-      setError(`抽出に失敗しました: ${errorMessage}`);
-      console.error(e);
-      setPlanFile(null); setPreviewImageUrl(null);
+        const errorMessage = e instanceof Error ? e.message : '不明なエラーが発生しました。';
+        setError(`抽出に失敗しました: ${errorMessage}`);
+        console.error(e);
+        setPlanFile(null); setPreviewImageUrl(null);
+        
+        // If the key is invalid or not found, reset the state to prompt user to select a new key.
+        if (errorMessage.includes("API_KEY") || errorMessage.includes("Requested entity was not found")) {
+            setIsKeyReady(false);
+        }
     } finally {
-      setIsLoading(false); setProgress(null);
+        setIsLoading(false); setProgress(null);
     }
   };
   
@@ -466,7 +506,16 @@ export default function App() {
             <div className="lg:col-span-4 flex flex-col space-y-6">
               <div className="flex flex-col space-y-6">
                 <h2 className="text-2xl font-bold text-content-100">1. プランをアップロード</h2>
-                <ImageUploader onFileChange={handleFileSelect} fileName={planFile?.name || null} onRemoveFile={handleRemoveFile} disabled={isLoading} progress={progress} previewImageUrl={previewImageUrl} />
+                <ImageUploader
+                    onFileChange={handleFileSelect}
+                    fileName={planFile?.name || null}
+                    onRemoveFile={handleRemoveFile}
+                    disabled={isLoading}
+                    progress={progress}
+                    previewImageUrl={previewImageUrl}
+                    isKeyReady={isKeyReady}
+                    onSelectKey={handleSelectKey}
+                />
               </div>
               <SpecificationSelector specs={specifications} options={options} onSpecChange={handleSpecChange} onOptionChange={handleOptionChange} specCategories={specCategories} optionCategories={optionCategories} disabled={!analysis} foreignDishwasher={foreignDishwasher} onForeignDishwasherChange={(value) => handleComplexOptionChange(value, DISHWASHER_IDS, setForeignDishwasher)} cupboard={cupboard} onCupboardChange={(value) => handleComplexOptionChange(value, CUPBOARD_IDS, setCupboard)} atticStorageSize={atticStorageSize} onAtticStorageSizeChange={setAtticStorageSize} solarPowerKw={solarPowerKw} onSolarPowerKwChange={setSolarPowerKw} customFurnitureItems={customFurnitureItems} onAddCustomFurnitureItem={handleAddCustomFurnitureItem} onRemoveCustomFurnitureItem={handleRemoveCustomFurnitureItem} onUpdateCustomFurnitureItem={handleUpdateCustomFurnitureItem} deepFoundation={deepFoundation} onUpdateDeepFoundation={handleUpdateDeepFoundation} />
             </div>

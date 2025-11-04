@@ -234,19 +234,21 @@ export default function App() {
   }, []);
 
   const handleSelectKey = async () => {
+    setError(''); // Clear previous errors.
     try {
         // @ts-ignore
         if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
             // @ts-ignore
             await window.aistudio.openSelectKey();
-            // Assume the user selected a key and update the UI.
+            // Assume the user selected a key and update the UI to allow file upload.
+            // If the key is invalid, the error will be caught during the next API call.
             setIsKeyReady(true);
         } else {
-            setError("APIキー選択機能がこの環境では利用できません。");
+            setError("APIキー選択機能がこの環境では利用できません。このアプリはGoogle AI Studio環境で実行する必要があります。");
         }
     } catch (e) {
         console.error("Failed to open API key selection dialog:", e);
-        setError("APIキー選択ダイアログを開けませんでした。");
+        setError("APIキー選択ダイアログを開く際にエラーが発生しました。");
     }
   };
 
@@ -431,14 +433,16 @@ export default function App() {
         setAnalysis(result);
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : '不明なエラーが発生しました。';
-        setError(`抽出に失敗しました: ${errorMessage}`);
         console.error(e);
-        setPlanFile(null); setPreviewImageUrl(null);
-        
-        // If the key is invalid or not found, reset the state to prompt user to select a new key.
+
         if (errorMessage.includes("API_KEY") || errorMessage.includes("Requested entity was not found")) {
+            setError("APIキーが無効、または設定されていません。「APIキーを設定」ボタンから再度設定してください。");
             setIsKeyReady(false);
+        } else {
+            setError(`抽出に失敗しました: ${errorMessage}`);
         }
+        
+        setPlanFile(null); setPreviewImageUrl(null);
     } finally {
         setIsLoading(false); setProgress(null);
     }

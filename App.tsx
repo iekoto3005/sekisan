@@ -375,6 +375,17 @@ export default function App() {
   const handleFileSelect = async (file: File) => {
     setProgress(0); setPlanFile(file); setAnalysis(null); setError(''); setIsLoading(true); setPreviewImageUrl(null);
     try {
+      // @ts-ignore
+      if (!process.env.API_KEY && window.aistudio) {
+        // @ts-ignore
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+            // @ts-ignore
+            await window.aistudio.openSelectKey();
+            // After this call, we assume the key is available in process.env.API_KEY
+        }
+      }
+
       const previewUrl = await generatePdfPreviewUrl(file);
       setPreviewImageUrl(previewUrl);
       const result = await analyzeImage(file, setProgress);

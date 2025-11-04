@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
             <h1 className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-secondary tracking-wide">
             SMART積算
             </h1>
-            <p className="text-content-200 mt-1">まずはプランをアップロード。自動積算を開始します。</p>
+            <p className="text-content-200 mt-1">まずはプランをアップロード。AIが自動で積算を開始します。</p>
         </div>
         <div className="flex-1 flex justify-end items-center">
             <div className="text-left">

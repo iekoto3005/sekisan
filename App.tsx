@@ -171,7 +171,6 @@ export default function App() {
   const [companyName, setCompanyName] = useState<string>('株式会社トランスワークス');
   const [contactLastName, setContactLastName] = useState<string>('');
   const [contactFirstName, setContactFirstName] = useState<string>('');
-  const [isKeyReady, setIsKeyReady] = useState(false);
 
 
   useEffect(() => {
@@ -211,46 +210,6 @@ export default function App() {
       setEstimate(null);
     }
   }, [analysis, specifications, options, costItems, specCategories, optionCategories, atticStorageSize, solarPowerKw, customFurnitureItems, deepFoundation]);
-
-  useEffect(() => {
-    // Check key status when the component mounts.
-    const checkKeyStatus = async () => {
-        try {
-            // @ts-ignore
-            if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
-                // @ts-ignore
-                const hasKey = await window.aistudio.hasSelectedApiKey();
-                setIsKeyReady(hasKey);
-            } else {
-                console.warn("window.aistudio.hasSelectedApiKey not found.");
-                setIsKeyReady(false);
-            }
-        } catch (e) {
-            console.error("Error checking for API key:", e);
-            setIsKeyReady(false);
-        }
-    };
-    checkKeyStatus();
-  }, []);
-
-  const handleSelectKey = async () => {
-    setError(''); // Clear previous errors.
-    try {
-        // @ts-ignore
-        if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
-            // @ts-ignore
-            await window.aistudio.openSelectKey();
-            // Assume the user selected a key and update the UI to allow file upload.
-            // If the key is invalid, the error will be caught during the next API call.
-            setIsKeyReady(true);
-        } else {
-            setError("APIキー選択機能がこの環境では利用できません。このアプリはGoogle AI Studio環境で実行する必要があります。");
-        }
-    } catch (e) {
-        console.error("Failed to open API key selection dialog:", e);
-        setError("APIキー選択ダイアログを開く際にエラーが発生しました。");
-    }
-  };
 
   // --- File and State Handlers ---
   const fileToBase64 = (file: File): Promise<string> =>
@@ -413,11 +372,6 @@ export default function App() {
   
 
   const handleFileSelect = async (file: File) => {
-    if (!isKeyReady) {
-        setError("APIキーが設定されていません。アップロードエリアのボタンから設定してください。");
-        return;
-    }
-
     setProgress(0); setPlanFile(file); setAnalysis(null); setError(''); setIsLoading(true); setPreviewImageUrl(null);
   
     try {
@@ -436,8 +390,7 @@ export default function App() {
         console.error(e);
 
         if (errorMessage.includes("API_KEY") || errorMessage.includes("Requested entity was not found")) {
-            setError("APIキーが無効、または設定されていません。「APIキーを設定」ボタンから再度設定してください。");
-            setIsKeyReady(false);
+            setError("APIキーが無効、または設定されていません。環境変数をご確認ください。");
         } else {
             setError(`抽出に失敗しました: ${errorMessage}`);
         }
@@ -517,8 +470,6 @@ export default function App() {
                     disabled={isLoading}
                     progress={progress}
                     previewImageUrl={previewImageUrl}
-                    isKeyReady={isKeyReady}
-                    onSelectKey={handleSelectKey}
                 />
               </div>
               <SpecificationSelector specs={specifications} options={options} onSpecChange={handleSpecChange} onOptionChange={handleOptionChange} specCategories={specCategories} optionCategories={optionCategories} disabled={!analysis} foreignDishwasher={foreignDishwasher} onForeignDishwasherChange={(value) => handleComplexOptionChange(value, DISHWASHER_IDS, setForeignDishwasher)} cupboard={cupboard} onCupboardChange={(value) => handleComplexOptionChange(value, CUPBOARD_IDS, setCupboard)} atticStorageSize={atticStorageSize} onAtticStorageSizeChange={setAtticStorageSize} solarPowerKw={solarPowerKw} onSolarPowerKwChange={setSolarPowerKw} customFurnitureItems={customFurnitureItems} onAddCustomFurnitureItem={handleAddCustomFurnitureItem} onRemoveCustomFurnitureItem={handleRemoveCustomFurnitureItem} onUpdateCustomFurnitureItem={handleUpdateCustomFurnitureItem} deepFoundation={deepFoundation} onUpdateDeepFoundation={handleUpdateDeepFoundation} />

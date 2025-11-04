@@ -3,7 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { PlanData } from '../types';
 
 // Configure the worker with the full CDN URL. This is more robust than relying on global script loading order.
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
 
 
 /**

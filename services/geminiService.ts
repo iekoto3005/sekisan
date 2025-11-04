@@ -63,7 +63,7 @@ export const generatePdfPreviewUrl = async (file: File): Promise<string> => {
 
 export const analyzeImage = async (planFile: File, onProgress: (p: number) => void): Promise<PlanData> => {
   // FIX: Per coding guidelines, use process.env.API_KEY instead of import.meta.env.VITE_API_KEY. This also resolves the TypeScript error "Property 'env' does not exist on type 'ImportMeta'".
-  if (!process.env.API_KEY) {
+  if (!import.meta.env.VITE_API_KEY) {
     throw new Error("API_KEY 環境変数が設定されていません。設定を確認してください。");
   }
 
@@ -73,7 +73,7 @@ export const analyzeImage = async (planFile: File, onProgress: (p: number) => vo
 
   onProgress(5);
   // FIX: Per coding guidelines, use process.env.API_KEY to initialize GoogleGenAI.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 
   const schema = {
     type: Type.OBJECT,
